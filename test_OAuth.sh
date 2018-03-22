@@ -1,16 +1,16 @@
 #!/bin/bash
 # Copyright (c) 2010, 2012 Yu-Jie Lin
-# 
+#
 # Permission is hereby granted, free of charge, to any person obtaining a copy of
 # this software and associated documentation files (the "Software"), to deal in
 # the Software without restriction, including without limitation the rights to
 # use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies
 # of the Software, and to permit persons to whom the Software is furnished to do
 # so, subject to the following conditions:
-# 
+#
 # The above copyright notice and this permission notice shall be included in all
 # copies or substantial portions of the Software.
-# 
+#
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 # IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 # FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -139,4 +139,35 @@ echo "Header $(_OAuth_authorization_header_params_string ${params[@]})"
 echo
 echo
 
+#####
 
+oauth_consumer_key="OauthKey"
+oauth_nonce=$(OAuth_nonce)
+oauth_signature_method="RSA-SHA1"
+oauth_timestamp=$(OAuth_timestamp)
+oauth_token="gw0dPc1tOfuvj5Cp9ikj60o0polkT0pl"
+oauth_verifier="xn1D5z"
+private_key="jira_privatekey.pem"
+
+echo "=== Acquiring a request token ==="
+
+params=(
+  $(OAuth_param 'oauth_consumer_key' "$oauth_consumer_key")
+  $(OAuth_param 'oauth_nonce' "$oauth_nonce")
+  $(OAuth_param 'oauth_signature_method' "$oauth_signature_method")
+  $(OAuth_param 'oauth_timestamp' "$oauth_timestamp")
+  $(OAuth_param 'oauth_token' "$oauth_token")
+  $(OAuth_param 'oauth_verifier' "$oauth_verifier")
+  )
+
+base_string=$(OAuth_base_string 'GET' 'http://jira.com.br/rest/api/latest/myself' ${params[@]})
+signature=$(_OAuth_signature "$oauth_signature_method" "$base_string" "$oauth_consumer_key" "$oauth_verifier" "$private_key")
+
+echo "base_string=$base_string"
+echo
+echo "signature=$signature"
+echo
+params[${#params[@]}]=$(OAuth_param 'oauth_signature' "$signature")
+echo "Header: $(_OAuth_authorization_header_params_string ${params[@]})"
+echo
+echo

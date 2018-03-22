@@ -1,16 +1,16 @@
 #!/bin/bash
 # Copyright (c) 2010, 2012 Yu-Jie Lin
-# 
+#
 # Permission is hereby granted, free of charge, to any person obtaining a copy of
 # this software and associated documentation files (the "Software"), to deal in
 # the Software without restriction, including without limitation the rights to
 # use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies
 # of the Software, and to permit persons to whom the Software is furnished to do
 # so, subject to the following conditions:
-# 
+#
 # The above copyright notice and this permission notice shall be included in all
 # copies or substantial portions of the Software.
-# 
+#
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 # IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 # FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -112,23 +112,34 @@ OAuth_HMAC_SHA1 () {
 	echo -n "$text" | openssl dgst -sha1 -binary -hmac "$key" | base64
 	}
 
+OAuth_RSA_SHA1 () {
+       # Hash the text $1 with private_key
+       local text="$1"
+       local private_key="$3"
+
+       echo -n "$text" | openssl dgst -sha1 -binary -sign $private_key | base64
+       }
+
+
 _OAuth_signature () {
 	# Return the signature, note it's necessary to pass to OAuth_PE before add to header
 	# $1 signature_method
 	# $2 base_string
 	# $3 consumer_secret
 	# $4 token_secret
+	# $5 private_key (if you are using rsa for example)
 	local signature_method="OAuth_${1//-/_}"
 	local base_string=$2
 	local c_secret=$3
 	local t_secret=$4
-	$signature_method "$base_string" "$c_secret&$t_secret"
+	local p_key=$5
+	$signature_method "$base_string" "$c_secret&$t_secret" "$p_key"
 	}
 
 OAuth_signature () {
 	# Return the signature, note it's necessary to pass to OAuth_PE before add to header
 	# $1 base_string
-	_OAuth_signature "$oauth_signature_method" "$1" "$oauth_consumer_secret" "$oauth_token_secret"
+	_OAuth_signature "$oauth_signature_method" "$1" "$oauth_consumer_secret" "$oauth_token_secret" "$private_key"
 	}
 
 _OAuth_authorization_header_params_string () {
@@ -164,9 +175,9 @@ _OAuth_authorization_header () {
 	local oauth_signature_method="$7"
 	local oauth_version="$8"
 	local oauth_nonce="$9"
-	[[ "$oauth_nonce" == "" ]] && oauth_nonce="$(OAuth_nonce)" 
+	[[ "$oauth_nonce" == "" ]] && oauth_nonce="$(OAuth_nonce)"
 	local oauth_timestamp="${10}"
-	[[ "$oauth_timestamp" == "" ]] && oauth_timestamp="$(OAuth_timestamp)" 
+	[[ "$oauth_timestamp" == "" ]] && oauth_timestamp="$(OAuth_timestamp)"
 	local method="${11}"
 	local url="${12}"
 	shift 12
